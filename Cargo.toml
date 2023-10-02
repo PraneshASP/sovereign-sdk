@@ -18,7 +18,9 @@ members = [
 
     "utils/zk-cycle-macros",
     "utils/zk-cycle-utils",
+    "utils/nft-utils",
     "utils/bashtestmd",
+    "utils/nft-utils",
 
     "module-system/sov-cli",
     "module-system/sov-modules-stf-template",
@@ -76,7 +78,7 @@ prometheus = { version = "0.13.3", default-features = false }
 proptest = "1.0.0"
 proptest-derive = "0.3.0"
 rand = "0.8"
-rayon = "1.5.2"
+rayon = "1.8.0"
 rocksdb = { version = "0.21.0", features = ["lz4"] }
 serde = { version = "1.0.188", features = ["derive", "rc"] }
 serde_json = { version = "1.0" }
@@ -110,6 +112,7 @@ ethers-signers = { version = "=2.0.10", default-features = false }
 ethers-middleware = { version = "=2.0.10", default-features = false }
 
 reth-primitives = { git = "https://github.com/paradigmxyz/reth", rev = "e83d3aa" }
+reth-interfaces = { git = "https://github.com/paradigmxyz/reth", rev = "e83d3aa" }
 reth-rpc-types = { git = "https://github.com/paradigmxyz/reth", rev = "e83d3aa" }
 reth-rpc-types-compat = { git = "https://github.com/paradigmxyz/reth", rev = "e83d3aa" }
 reth-revm = { git = "https://github.com/paradigmxyz/reth", rev = "e83d3aa" }
