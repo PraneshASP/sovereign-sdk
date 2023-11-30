@@ -4,17 +4,18 @@ mod snapshot_manager;
 use std::collections::HashMap;
 use std::hash::Hash;
 use std::marker::PhantomData;
+use std::path::Path;
 use std::sync::{Arc, RwLock};
 
 use sov_rollup_interface::da::{BlockHeaderTrait, DaSpec};
 use sov_rollup_interface::storage::HierarchicalStorageManager;
-use sov_schema_db::snapshot::{DbSnapshot, FrozenDbSnapshot, ReadOnlyLock, SnapshotId};
-use sov_state::MerkleProofSpec;
+use sov_schema_db::snapshot::{DbSnapshot, ReadOnlyLock, SnapshotId};
+use sov_state::{MerkleProofSpec, ProverStorage};
 
-use crate::dummy_storage::NewProverStorage;
 use crate::snapshot_manager::SnapshotManager;
 
-struct NewProverStorageManager<Da: DaSpec, S: MerkleProofSpec> {
+/// TBD
+pub struct NewProverStorageManager<Da: DaSpec, S: MerkleProofSpec> {
     // L1 forks representation
     // Chain: prev_block -> child_blocks
     chain_forks: HashMap<Da::SlotHash, Vec<Da::SlotHash>>,
@@ -72,8 +73,8 @@ impl<Da: DaSpec, S: MerkleProofSpec> HierarchicalStorageManager<Da>
 where
     Da::SlotHash: Hash,
 {
-    type NativeStorage = NewProverStorage<S, SnapshotManager>;
-    type NativeChangeSet = NewProverStorage<S, SnapshotManager>;
+    type NativeStorage = ProverStorage<S, SnapshotManager>;
+    type NativeChangeSet = ProverStorage<S, SnapshotManager>;
 
     fn get_native_storage_on(
         &mut self,
@@ -122,20 +123,20 @@ where
             }
         };
 
-        let state_db_snapshot = DbSnapshot::new(
+        let _state_db_snapshot = DbSnapshot::new(
             new_snapshot_id,
             ReadOnlyLock::new(self.state_snapshot_manager.clone()),
         );
 
-        let native_db_snapshot = DbSnapshot::new(
+        let _native_db_snapshot = DbSnapshot::new(
             new_snapshot_id,
             ReadOnlyLock::new(self.accessory_snapshot_manager.clone()),
         );
 
-        Ok(NewProverStorage::with_db_handlers(
-            state_db_snapshot,
-            native_db_snapshot,
-        ))
+        // TODO: Replace when ready
+        let dummy_path = Path::new("/tmp/test");
+
+        Ok(ProverStorage::with_path(dummy_path)?)
     }
 
     fn save_change_set(
@@ -149,40 +150,40 @@ where
                 block_header
             );
         }
-        let (state_db, native_db) = change_set.freeze();
-        let state_snapshot: FrozenDbSnapshot = state_db.into();
-        let native_snapshot: FrozenDbSnapshot = native_db.into();
-        let snapshot_id = state_snapshot.get_id();
-        if snapshot_id != native_snapshot.get_id() {
-            anyhow::bail!(
-                "State id={} and Native id={} snapshots have different are not matching",
-                snapshot_id,
-                native_snapshot.get_id()
-            );
-        }
-
-        // Obviously alien
-        if snapshot_id > self.latest_snapshot_id {
-            anyhow::bail!("Attempt to save unknown snapshot with id={}", snapshot_id);
-        }
-
-        {
-            let existing_snapshot_id = self
-                .block_hash_to_snapshot_id
-                .get(&block_header.hash())
-                .expect("Inconsistent block_hash_to_snapshot_id");
-            if *existing_snapshot_id != snapshot_id {
-                anyhow::bail!("Attempt to save unknown snapshot with id={}", snapshot_id);
-            }
-        }
-
-        {
-            let mut state_manager = self.state_snapshot_manager.write().unwrap();
-            let mut native_manager = self.accessory_snapshot_manager.write().unwrap();
-
-            state_manager.add_snapshot(state_snapshot);
-            native_manager.add_snapshot(native_snapshot);
-        }
+        // let (state_db, native_db) = change_set.freeze();
+        // let state_snapshot: FrozenDbSnapshot = state_db.into();
+        // let native_snapshot: FrozenDbSnapshot = native_db.into();
+        // let snapshot_id = state_snapshot.get_id();
+        // if snapshot_id != native_snapshot.get_id() {
+        //     anyhow::bail!(
+        //         "State id={} and Native id={} snapshots have different are not matching",
+        //         snapshot_id,
+        //         native_snapshot.get_id()
+        //     );
+        // }
+        //
+        // // Obviously alien
+        // if snapshot_id > self.latest_snapshot_id {
+        //     anyhow::bail!("Attempt to save unknown snapshot with id={}", snapshot_id);
+        // }
+        //
+        // {
+        //     let existing_snapshot_id = self
+        //         .block_hash_to_snapshot_id
+        //         .get(&block_header.hash())
+        //         .expect("Inconsistent block_hash_to_snapshot_id");
+        //     if *existing_snapshot_id != snapshot_id {
+        //         anyhow::bail!("Attempt to save unknown snapshot with id={}", snapshot_id);
+        //     }
+        // }
+        //
+        // {
+        //     let mut state_manager = self.state_snapshot_manager.write().unwrap();
+        //     let mut native_manager = self.accessory_snapshot_manager.write().unwrap();
+        //
+        //     state_manager.add_snapshot(state_snapshot);
+        //     native_manager.add_snapshot(native_snapshot);
+        // }
 
         Ok(())
     }

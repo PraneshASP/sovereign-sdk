@@ -16,23 +16,25 @@ use crate::MerkleProofSpec;
 
 /// A [`Storage`] implementation to be used by the prover in a native execution
 /// environment (outside of the zkVM).
-pub struct ProverStorage<S: MerkleProofSpec> {
+pub struct ProverStorage<S: MerkleProofSpec, Q> {
     db: StateDB,
     native_db: NativeDB,
     _phantom_hasher: PhantomData<S::Hasher>,
+    _phantom_q: PhantomData<Q>,
 }
 
-impl<S: MerkleProofSpec> Clone for ProverStorage<S> {
+impl<S: MerkleProofSpec, Q> Clone for ProverStorage<S, Q> {
     fn clone(&self) -> Self {
         Self {
             db: self.db.clone(),
             native_db: self.native_db.clone(),
             _phantom_hasher: Default::default(),
+            _phantom_q: Default::default(),
         }
     }
 }
 
-impl<S: MerkleProofSpec> ProverStorage<S> {
+impl<S: MerkleProofSpec, Q> ProverStorage<S, Q> {
     /// Creates a new [`ProverStorage`] instance at the specified path, opening
     /// or creating the necessary RocksDB database(s) at the specified path.
     pub fn with_path(path: impl AsRef<Path>) -> Result<Self, anyhow::Error> {
@@ -43,6 +45,7 @@ impl<S: MerkleProofSpec> ProverStorage<S> {
             db: state_db,
             native_db,
             _phantom_hasher: Default::default(),
+            _phantom_q: Default::default(),
         })
     }
 
@@ -51,6 +54,7 @@ impl<S: MerkleProofSpec> ProverStorage<S> {
             db,
             native_db,
             _phantom_hasher: Default::default(),
+            _phantom_q: Default::default(),
         }
     }
 
@@ -72,7 +76,7 @@ pub struct ProverStateUpdate {
     // pub accessory_update: OrderedReadsAndWrites,
 }
 
-impl<S: MerkleProofSpec> Storage for ProverStorage<S> {
+impl<S: MerkleProofSpec, Q> Storage for ProverStorage<S, Q> {
     type Witness = S::Witness;
     type RuntimeConfig = Config;
     type Proof = jmt::proof::SparseMerkleProof<S::Hasher>;
@@ -213,7 +217,7 @@ impl<S: MerkleProofSpec> Storage for ProverStorage<S> {
     }
 }
 
-impl<S: MerkleProofSpec> NativeStorage for ProverStorage<S> {
+impl<S: MerkleProofSpec, Q> NativeStorage for ProverStorage<S, Q> {
     fn get_with_proof(&self, key: StorageKey) -> StorageProof<Self::Proof> {
         let merkle = JellyfishMerkleTree::<StateDB, S::Hasher>::new(&self.db);
         let (val_opt, proof) = merkle

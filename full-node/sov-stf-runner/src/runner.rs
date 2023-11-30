@@ -1,27 +1,26 @@
 use std::net::SocketAddr;
-use std::time::Duration;
 
 use jsonrpsee::RpcModule;
 use sov_db::ledger_db::{LedgerDB, SlotCommit};
 use sov_rollup_interface::da::{BlobReaderTrait, BlockHeaderTrait, DaSpec};
 use sov_rollup_interface::services::da::{DaService, SlotData};
 use sov_rollup_interface::stf::StateTransitionFunction;
-use sov_rollup_interface::storage::StorageManager;
-use sov_rollup_interface::zk::ZkvmHost;
+use sov_rollup_interface::storage::HierarchicalStorageManager;
+use sov_rollup_interface::zk::{Zkvm, ZkvmHost};
 use tokio::sync::oneshot;
 use tracing::{debug, info};
 
 use crate::verifier::StateTransitionVerifier;
 use crate::{ProofSubmissionStatus, ProverService, RunnerConfig, StateTransitionData};
 type StateRoot<ST, Vm, Da> = <ST as StateTransitionFunction<Vm, Da>>::StateRoot;
-type InitialState<ST, Vm, Da> = <ST as StateTransitionFunction<Vm, Da>>::GenesisParams;
+type GenesisParams<ST, Vm, Da> = <ST as StateTransitionFunction<Vm, Da>>::GenesisParams;
 
 /// Combines `DaService` with `StateTransitionFunction` and "runs" the rollup.
 pub struct StateTransitionRunner<Stf, Sm, Da, Vm, Ps>
 where
     Da: DaService,
     Vm: ZkvmHost,
-    Sm: StorageManager,
+    Sm: HierarchicalStorageManager<Da::Spec>,
     Stf: StateTransitionFunction<Vm, Da::Spec, Condition = <Da::Spec as DaSpec>::ValidityCondition>,
     Ps: ProverService,
 {
@@ -51,11 +50,19 @@ where
     Prover,
 }
 
+/// How [`StateTransitionRunner`] is initialized
+pub enum InitVariant<Stf: StateTransitionFunction<Vm, Da>, Vm: Zkvm, Da: DaSpec> {
+    /// From give state root
+    Initialized(Stf::StateRoot),
+    /// From empty state root
+    GenesisStorage(Stf::PreState),
+}
+
 impl<Stf, Sm, Da, Vm, Ps> StateTransitionRunner<Stf, Sm, Da, Vm, Ps>
 where
     Da: DaService<Error = anyhow::Error> + Clone + Send + Sync + 'static,
     Vm: ZkvmHost,
-    Sm: StorageManager,
+    Sm: HierarchicalStorageManager<Da::Spec>,
     Stf: StateTransitionFunction<
         Vm,
         Da::Spec,
@@ -78,25 +85,26 @@ where
         ledger_db: LedgerDB,
         stf: Stf,
         storage_manager: Sm,
-        prev_state_root: Option<StateRoot<Stf, Vm, Da::Spec>>,
-        genesis_config: InitialState<Stf, Vm, Da::Spec>,
+        init_variant: InitVariant<Stf, Vm, Da::Spec>,
+        genesis_config: GenesisParams<Stf, Vm, Da::Spec>,
         prover_service: Ps,
     ) -> Result<Self, anyhow::Error> {
         let rpc_config = runner_config.rpc_config;
 
-        let prev_state_root = if let Some(prev_state_root) = prev_state_root {
-            // Check if the rollup has previously been initialized
-            debug!("Chain is already initialized. Skipping initialization.");
-            prev_state_root
-        } else {
-            info!("No history detected. Initializing chain...");
-            let genesis_state = storage_manager.get_native_storage();
-            let (genesis_root, _) = stf.init_chain(genesis_state, genesis_config);
-            info!(
-                "Chain initialization is done. Genesis root: 0x{}",
-                hex::encode(genesis_root.as_ref())
-            );
-            genesis_root
+        let prev_state_root = match init_variant {
+            InitVariant::Initialized(state_root) => {
+                debug!("Chain is already initialized. Skipping initialization.");
+                state_root
+            }
+            InitVariant::GenesisStorage(state) => {
+                info!("No history detected. Initializing chain...");
+                let (genesis_root, _) = stf.init_chain(state, genesis_config);
+                info!(
+                    "Chain initialization is done. Genesis root: 0x{}",
+                    hex::encode(genesis_root.as_ref()),
+                );
+                genesis_root
+            }
         };
 
         let listen_address = SocketAddr::new(rpc_config.bind_host.parse()?, rpc_config.bind_port);
@@ -147,22 +155,7 @@ where
         for height in self.start_height.. {
             debug!("Requesting data for height {}", height,);
 
-            loop {
-                match self.da_service.get_last_finalized_block_header().await {
-                    Ok(header) => {
-                        tracing::trace!("Last finalized height={}", header.height());
-                        if header.height() >= height {
-                            break;
-                        }
-                    }
-                    Err(err) => {
-                        tracing::info!("Error receiving last finalized block header: {:?}", err);
-                    }
-                }
-
-                tokio::time::sleep(Duration::from_millis(10)).await;
-            }
-            // At this point we sure that the block request is finalized
+            // TODO: Retry and check if prev_root_hash matches
 
             // Assumes we are on chains with instant finality
             let filtered_block = self.da_service.get_block_at(height).await?;
@@ -185,7 +178,10 @@ where
 
             let mut data_to_commit = SlotCommit::new(filtered_block.clone());
 
-            let pre_state = self.storage_manager.get_native_storage();
+            // TODO: Handle an error
+            let pre_state = self
+                .storage_manager
+                .get_native_storage_on(filtered_block.header())?;
             let slot_result = self.stf.apply_slot(
                 &self.state_root,
                 pre_state,
@@ -213,6 +209,9 @@ where
                     blobs,
                     state_transition_witness: slot_result.witness,
                 };
+
+            self.storage_manager
+                .save_change_set(filtered_block.header(), slot_result.change_set)?;
 
             // Create ZKP proof.
             {

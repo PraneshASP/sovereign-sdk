@@ -1,3 +1,7 @@
+use std::fmt::Debug;
+use std::marker::PhantomData;
+
+use serde::de::DeserializeOwned;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 use sha2::Digest;
@@ -14,16 +18,17 @@ use crate::default_signature::{DefaultPublicKey, DefaultSignature};
 #[cfg(feature = "native")]
 #[cfg_attr(feature = "arbitrary", derive(arbitrary::Arbitrary))]
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
-pub struct DefaultContext {
+pub struct DefaultContext<Q> {
     pub sender: Address,
     /// The height to report. This is set by the kernel when the context is created
     visible_height: u64,
+    _phantom_query_manager: PhantomData<Q>,
 }
 
 #[cfg(feature = "native")]
-impl Spec for DefaultContext {
+impl<Q> Spec for DefaultContext<Q> {
     type Address = Address;
-    type Storage = ProverStorage<DefaultStorageSpec>;
+    type Storage = ProverStorage<DefaultStorageSpec, Q>;
     type PrivateKey = DefaultPrivateKey;
     type PublicKey = DefaultPublicKey;
     type Hasher = sha2::Sha256;
@@ -32,7 +37,7 @@ impl Spec for DefaultContext {
 }
 
 #[cfg(feature = "native")]
-impl Context for DefaultContext {
+impl<Q: Clone + Debug + PartialEq + Serialize + DeserializeOwned> Context for DefaultContext<Q> {
     type GasUnit = TupleGasUnit<2>;
 
     fn sender(&self) -> &Self::Address {
@@ -43,6 +48,7 @@ impl Context for DefaultContext {
         Self {
             sender,
             visible_height: height,
+            _phantom_query_manager: Default::default(),
         }
     }
 

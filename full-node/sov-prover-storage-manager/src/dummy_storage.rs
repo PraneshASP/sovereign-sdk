@@ -1,3 +1,4 @@
+#[allow(dead_code)]
 // This module is used as a temporary filler for `ProverStorage`, until this module is integrated.
 // It is going to be deleted after integration has been completed
 use std::marker::PhantomData;
@@ -9,18 +10,18 @@ use sov_schema_db::{define_schema, CodecError};
 use sov_state::MerkleProofSpec;
 
 // Oversimplified representation of [`sov_state::ProverStorage`]
-pub struct NewProverStorage<Mps: MerkleProofSpec, Q> {
+pub struct DummyProverStorage<Mps: MerkleProofSpec, Q> {
     state_db: DbSnapshot<Q>,
     native_db: DbSnapshot<Q>,
     p: PhantomData<Mps>,
 }
 
-impl<Mps: MerkleProofSpec, Q: QueryManager> NewProverStorage<Mps, Q> {
+impl<Mps: MerkleProofSpec, Q: QueryManager> DummyProverStorage<Mps, Q> {
     pub(crate) fn with_db_handlers(
         state_db_snapshot: DbSnapshot<Q>,
         native_db_snapshot: DbSnapshot<Q>,
     ) -> Self {
-        NewProverStorage {
+        DummyProverStorage {
             state_db: state_db_snapshot,
             native_db: native_db_snapshot,
             p: Default::default(),
@@ -28,7 +29,7 @@ impl<Mps: MerkleProofSpec, Q: QueryManager> NewProverStorage<Mps, Q> {
     }
 
     pub(crate) fn freeze(self) -> (DbSnapshot<Q>, DbSnapshot<Q>) {
-        let NewProverStorage {
+        let DummyProverStorage {
             state_db,
             native_db,
             ..
