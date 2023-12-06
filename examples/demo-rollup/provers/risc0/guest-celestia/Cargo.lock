@@ -526,6 +526,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "counter-module"
+version = "0.3.0"
+dependencies = [
+ "anyhow",
+ "borsh",
+ "serde",
+ "sov-modules-api",
+ "sov-state",
+ "thiserror",
+]
+
+[[package]]
 name = "cpufeatures"
 version = "0.2.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -622,6 +634,7 @@ version = "0.3.0"
 dependencies = [
  "anyhow",
  "borsh",
+ "counter-module",
  "hex",
  "serde",
  "sov-accounts",

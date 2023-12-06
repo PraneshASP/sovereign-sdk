@@ -31,7 +31,7 @@ sov-sequencer-registry = { path = "../../../module-system/module-implementations
 sov-blob-storage = { path = "../../../module-system/module-implementations/sov-blob-storage" }
 sov-bank = { path = "../../../module-system/module-implementations/sov-bank" }
 sov-nft-module = { path = "../../../module-system/module-implementations/sov-nft-module" }
-
+counter-module = { path = "../../../module-system/module-implementations/counter-module" }
 sov-mock-da = { path = "../../../adapters/mock-da" }
 sov-chain-state = { path = "../../../module-system/module-implementations/sov-chain-state" }
 sov-modules-stf-blueprint = { path = "../../../module-system/sov-modules-stf-blueprint" }
@@ -64,6 +64,7 @@ native = [
     "sov-blob-storage/native",
     "sov-chain-state/native",
     "sov-value-setter/native",
+    "counter-module/native",
     "sov-modules-api/native",
     "sov-rollup-interface/native",
     "sov-mock-da/native",
@@ -80,6 +81,7 @@ serde = [
     "sov-sequencer-registry/serde",
     "sov-blob-storage/serde",
     "sov-value-setter/serde",
+    "counter-module/serde",
     "sov-accounts/serde",
     "sov-nft-module/serde",
     "sov-evm?/serde",
