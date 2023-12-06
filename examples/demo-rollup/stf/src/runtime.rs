@@ -32,6 +32,10 @@
 
 #![allow(unused_doc_comments)]
 #[cfg(feature = "native")]
+use crate::genesis_config::GenesisPaths;
+#[cfg(feature = "native")]
+use counter_module::{CounterModuleRpcImpl, CounterModuleRpcServer};
+#[cfg(feature = "native")]
 use sov_accounts::{AccountsRpcImpl, AccountsRpcServer};
 #[cfg(feature = "native")]
 use sov_bank::{BankRpcImpl, BankRpcServer};
@@ -59,9 +63,6 @@ use sov_sequencer_registry::{SequencerRegistryRpcImpl, SequencerRegistryRpcServe
 #[cfg(feature = "native")]
 use sov_value_setter::{ValueSetterRpcImpl, ValueSetterRpcServer};
 
-#[cfg(feature = "native")]
-use crate::genesis_config::GenesisPaths;
-
 /// The `demo-stf runtime`.
 #[cfg_attr(feature = "native", derive(CliWallet), expose_rpc)]
 #[derive(Genesis, DispatchCall, MessageCodec, DefaultRuntime)]
@@ -88,6 +89,9 @@ pub struct Runtime<C: Context, Da: DaSpec> {
     #[cfg_attr(feature = "native", cli_skip)]
     /// The EVM module.
     pub evm: sov_evm::Evm<C>,
+
+    /// The Counter module.
+    pub counter_module: counter_module::CounterModule<C>,
 }
 
 impl<C, Da> sov_modules_stf_blueprint::Runtime<C, Da> for Runtime<C, Da>

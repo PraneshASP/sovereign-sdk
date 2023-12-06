@@ -1,0 +1,36 @@
+[package]
+name = "counter-module"
+description = "A Sovereign SDK counter module for setting, incrementing and decrementing a counter"
+authors = { workspace = true }
+edition = { workspace = true }
+homepage = { workspace = true }
+license = { workspace = true }
+repository = { workspace = true }
+
+version = { workspace = true }
+readme = "README.md"
+resolver = "2"
+publish = false
+
+
+[dev-dependencies]
+counter-module = { path = ".", features = ["native"] }
+sov-modules-api = { path = "../../sov-modules-api", features = ["native"] }
+tempfile = { workspace = true }
+
+[dependencies]
+anyhow = { workspace = true }
+sov-modules-api = { path = "../../sov-modules-api" }
+sov-state = { path = "../../sov-state" }
+schemars = { workspace = true, optional = true }
+serde = { workspace = true }
+serde_json = { workspace = true, optional = true }
+thiserror = { workspace = true }
+borsh = { workspace = true, features = ["rc"] }
+jsonrpsee = { workspace = true, features = ["macros", "client-core", "server"], optional = true }
+clap = { workspace = true, optional = true }
+
+[features]
+default = []
+native = ["serde", "serde_json", "jsonrpsee", "schemars", "clap", "sov-modules-api/native", "sov-state/native"]
+serde = []

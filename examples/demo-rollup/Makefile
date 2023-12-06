@@ -88,8 +88,20 @@ import-keys: build-sov-cli
 test-create-token: set-rpc-url test-generate-create-token-tx import-keys
 	$(SOV_CLI_REL_PATH) rpc submit-batch by-nickname DANGER__DO_NOT_USE_WITH_REAL_MONEY
 
+test-generate-set-value-tx: wait-compose-ready build-sov-cli
+	$(SOV_CLI_REL_PATH) transactions import from-file counter-module --path ../test-data/requests/counter/set_value.json
+
+test-set-value: set-rpc-url test-generate-set-value-tx import-keys
+	$(SOV_CLI_REL_PATH) rpc submit-batch by-nickname DANGER__DO_NOT_USE_WITH_REAL_MONEY
+
 remove-insecure-keys: build-sov-cli
 	$(SOV_CLI_REL_PATH) keys remove by-address sov1l6n2cku82yfqld30lanm2nfw43n2auc8clw7r5u5m6s7p8jrm4zqrr8r94
+
+test-generate-increment-tx: wait-compose-ready build-sov-cli
+	$(SOV_CLI_REL_PATH) transactions import from-file counter-module --path ../test-data/requests/counter/increment.json
+
+test-increment: set-rpc-url test-generate-increment-tx import-keys
+	$(SOV_CLI_REL_PATH) rpc submit-batch by-nickname DANGER__DO_NOT_USE_WITH_REAL_MONEY
 
 clean-celestia-rollup-db:
 	$(eval path := ./$(shell awk -F'=' '/^path/ {print $$2}' celestia_rollup_config.toml | tr -d '[:space:]"\n'))

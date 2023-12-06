@@ -6,6 +6,7 @@ use std::convert::AsRef;
 use std::path::{Path, PathBuf};
 
 use anyhow::{bail, Context as _};
+use counter_module::CounterModuleConfig;
 use sov_accounts::AccountConfig;
 use sov_bank::BankConfig;
 use sov_chain_state::ChainStateConfig;
@@ -42,6 +43,9 @@ pub struct GenesisPaths {
     #[cfg(feature = "experimental")]
     /// EVM genesis path.
     pub evm_genesis_path: PathBuf,
+
+    /// Counter module genesis path
+    pub counter_module_genesis_path: PathBuf,
 }
 
 impl GenesisPaths {
@@ -60,6 +64,7 @@ impl GenesisPaths {
             nft_path: dir.as_ref().join("nft.json"),
             #[cfg(feature = "experimental")]
             evm_genesis_path: dir.as_ref().join("evm.json"),
+            counter_module_genesis_path: dir.as_ref().join("counter.json"),
         }
     }
 }
@@ -115,6 +120,9 @@ fn create_genesis_config<C: Context, Da: DaSpec>(
     let chain_state_config: ChainStateConfig =
         read_json_file(&genesis_paths.chain_state_genesis_path)?;
 
+    let counter_module_config: CounterModuleConfig<C> =
+        read_json_file(&genesis_paths.counter_module_genesis_path)?;
+
     #[cfg(feature = "experimental")]
     let evm_config: EvmConfig = read_json_file(&genesis_paths.evm_genesis_path)?;
 
@@ -128,5 +136,6 @@ fn create_genesis_config<C: Context, Da: DaSpec>(
         nft_config,
         #[cfg(feature = "experimental")]
         evm_config,
+        counter_module_config,
     ))
 }
