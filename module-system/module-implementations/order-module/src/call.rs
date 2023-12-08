@@ -68,8 +68,10 @@ impl<C: sov_modules_api::Context> OrderModule<C> {
             ts,
         };
 
+        let id: u64 = 12345678;
+
         // This is how we set a new value:
-        self.order.set(&new_order_struct, working_set);
+        self.orders.set(&id, &new_order_struct, working_set);
         working_set.add_event("set", &format!("order_set: {new_order_struct:?}"));
 
         Ok(CallResponse::default())

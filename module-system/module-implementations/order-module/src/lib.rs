@@ -28,7 +28,7 @@ pub struct OrderModule<C: sov_modules_api::Context> {
 
     /// order kept in the state.
     #[state]
-    pub order: sov_modules_api::StateValue<crate::CallMessage>,
+    pub orders: sov_modules_api::StateMap<u64, crate::CallMessage>,
 
     /// Holds the address of the admin user who is allowed to update the value.
     #[state]

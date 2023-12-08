@@ -55,7 +55,8 @@ fn test_submit_order_helper<C: Context>(
 
     // Test query
     {
-        let query_response = module.query_order(working_set).unwrap();
+        let id = 12345678;
+        let query_response = module.query_order(id, working_set).unwrap();
 
         let call_msg_expected = call::CallMessage::NewMarketOrder {
             order_asset: String::from("USDC"),
@@ -67,7 +68,7 @@ fn test_submit_order_helper<C: Context>(
 
         assert_eq!(
             query::Response {
-                order: Some(call_msg_expected)
+                order: call_msg_expected
             },
             query_response
         )
