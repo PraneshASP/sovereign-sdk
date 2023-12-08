@@ -40,7 +40,7 @@ fn test_submit_order_helper<C: Context>(
     let call_msg = call::CallMessage::NewMarketOrder {
         order_asset: String::from("USDC"),
         price_asset: String::from("ETH"),
-        side: OrderSide::Bid,
+        side: 2,
         qty: 1,
         ts: 1702012020,
     };
@@ -61,7 +61,7 @@ fn test_submit_order_helper<C: Context>(
         let call_msg_expected = call::CallMessage::NewMarketOrder {
             order_asset: String::from("USDC"),
             price_asset: String::from("ETH"),
-            side: OrderSide::Bid,
+            side: 2,
             qty: 1,
             ts: 1702012020,
         };
