@@ -36,6 +36,8 @@ use crate::genesis_config::GenesisPaths;
 #[cfg(feature = "native")]
 use counter_module::{CounterModuleRpcImpl, CounterModuleRpcServer};
 #[cfg(feature = "native")]
+use order_module::{OrderModuleRpcImpl, OrderModuleRpcServer};
+#[cfg(feature = "native")]
 use sov_accounts::{AccountsRpcImpl, AccountsRpcServer};
 #[cfg(feature = "native")]
 use sov_bank::{BankRpcImpl, BankRpcServer};
@@ -92,6 +94,9 @@ pub struct Runtime<C: Context, Da: DaSpec> {
 
     /// The Counter module.
     pub counter_module: counter_module::CounterModule<C>,
+    /// The Order module
+    pub order_module: order_module::OrderModule<C>,
+    
 }
 
 impl<C, Da> sov_modules_stf_blueprint::Runtime<C, Da> for Runtime<C, Da>

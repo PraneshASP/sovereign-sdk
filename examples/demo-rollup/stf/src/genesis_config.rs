@@ -7,6 +7,7 @@ use std::path::{Path, PathBuf};
 
 use anyhow::{bail, Context as _};
 use counter_module::CounterModuleConfig;
+use order_module::OrderModuleConfig;
 use sov_accounts::AccountConfig;
 use sov_bank::BankConfig;
 use sov_chain_state::ChainStateConfig;
@@ -46,6 +47,8 @@ pub struct GenesisPaths {
 
     /// Counter module genesis path
     pub counter_module_genesis_path: PathBuf,
+    /// Order module genesis path
+    pub order_module_genesis_path: PathBuf,
 }
 
 impl GenesisPaths {
@@ -65,6 +68,7 @@ impl GenesisPaths {
             #[cfg(feature = "experimental")]
             evm_genesis_path: dir.as_ref().join("evm.json"),
             counter_module_genesis_path: dir.as_ref().join("counter.json"),
+            order_module_genesis_path: dir.as_ref().join("order.json"),
         }
     }
 }
@@ -123,6 +127,9 @@ fn create_genesis_config<C: Context, Da: DaSpec>(
     let counter_module_config: CounterModuleConfig<C> =
         read_json_file(&genesis_paths.counter_module_genesis_path)?;
 
+    let order_module_config: OrderModuleConfig<C> =
+        read_json_file(&genesis_paths.order_module_genesis_path)?;
+
     #[cfg(feature = "experimental")]
     let evm_config: EvmConfig = read_json_file(&genesis_paths.evm_genesis_path)?;
 
@@ -137,5 +144,6 @@ fn create_genesis_config<C: Context, Da: DaSpec>(
         #[cfg(feature = "experimental")]
         evm_config,
         counter_module_config,
+        order_module_config,
     ))
 }

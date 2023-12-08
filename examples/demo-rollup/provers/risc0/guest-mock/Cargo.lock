@@ -272,6 +272,7 @@ dependencies = [
  "borsh",
  "counter-module",
  "hex",
+ "order-module",
  "serde",
  "sov-accounts",
  "sov-bank",
@@ -588,6 +589,18 @@ name = "once_cell"
 version = "1.18.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dd8b5dd2ae5ed71462c540258bedcb51965123ad7e7ccf4b9a8cafaa4a63576d"
+
+[[package]]
+name = "order-module"
+version = "0.3.0"
+dependencies = [
+ "anyhow",
+ "borsh",
+ "serde",
+ "sov-modules-api",
+ "sov-state",
+ "thiserror",
+]
 
 [[package]]
 name = "paste"
