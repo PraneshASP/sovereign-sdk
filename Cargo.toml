@@ -49,6 +49,7 @@ members = [
     "module-system/module-implementations/examples/sov-accessory-state",
     "module-system/module-implementations/integration-tests",
     "module-system/module-implementations/counter-module",
+    "module-system/module-implementations/order-module",
 ]
 
 [workspace.package]
